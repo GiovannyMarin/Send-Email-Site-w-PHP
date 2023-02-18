@@ -16,6 +16,7 @@ class Mensagem
     private $para = null;
     private $assunto = null;
     private $mensagem = null;
+    public $status = array('codigo_status' => null, 'descricao_status' => '');
 
     public function __get($attr)
     {
@@ -44,16 +45,16 @@ $mensagem->__set('assunto', $_POST['assunto']);
 $mensagem->__set('mensagem', $_POST['mensagem']);
 
 
-if ($mensagem->mensagemValida()) {
+if (!$mensagem->mensagemValida()) {
     echo 'n eh valida';
-    die();
+    header('Location: index.php');
 }
 
 $mail = new PHPMailer(true);
 
 try {
     //Server settings
-    $mail->SMTPDebug = SMTP::DEBUG_SERVER;                      //Enable verbose debug output
+    $mail->SMTPDebug = false;                      //Enable verbose debug output
     $mail->isSMTP();                                            //Send using SMTP
     $mail->Host       = 'smtp.gmail.com';                     //Set the SMTP server to send through
     $mail->SMTPAuth   = true;                                   //Enable SMTP authentication
@@ -63,8 +64,8 @@ try {
     $mail->Port       = 587;                                    //TCP port to connect to; use 587 if you have set `SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS`
 
     //Recipients
-    $mail->setFrom('giovanny466@hotmail.com', 'Giovanny');
-    $mail->addAddress('giovanny466@hotmail.com', 'Joe User');     //Add a recipient
+    $mail->setFrom('giovanny466@hotmail.com', 'Send Email');
+    $mail->addAddress($mensagem->__get('para'), 'Leo eh vc');     //Add a recipient
     //$mail->addAddress('ellen@example.com');               //Name is optional
     //$mail->addReplyTo('info@example.com', 'Information');
     //$mail->addCC('cc@example.com');
@@ -76,16 +77,65 @@ try {
 
     //Content
     $mail->isHTML(true);                                  //Set email format to HTML
-    $mail->Subject = 'Assunto';
-    $mail->Body    = 'oi eu sou o conteudo do <strong>email</strong>';
-    $mail->AltBody = 'oi eu sou o conteudo do email';
+    $mail->Subject = $mensagem->__get('assunto');
+    $mail->Body    = $mensagem->__get('mensagem');
+    $mail->AltBody = $mensagem->__get('mensagem');
 
     $mail->send();
-    echo 'Nao foi possivel enviar esse email, tente novamente mais tarde';
+
+    $mensagem->status['codigo_status'] = 1;
+    $mensagem->status['descricao_status'] = 'Email enviado com sucesso';
 } catch (Exception $e) {
-    echo "Detalhes do erro: {$mail->ErrorInfo}";
+    $mensagem->status['codigo_status'] = 2;
+    $mensagem->status['descricao_status'] = 'Email nao foi enviado' . "Detalhes do erro: {$mail->ErrorInfo}";
 }
 
+?><!---->
+<html>
 
+<head>
+    <meta charset="utf-8" />
+    <title>App Mail Send</title>
 
-?><!-->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+</head>
+
+<body>
+    <div class="container">
+
+        <div class="py-3 text-center">
+            <img class="d-block mx-auto mb-2" src="logo.png" alt="" width="72" height="72">
+            <h2>Send Mail</h2>
+            <p class="lead">Seu app de envio de e-mails particular!</p>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+
+                <?php
+                if ($mensagem->status['codigo_status'] == 1) { ?>
+
+                    <div class="container">
+                        <h1 class="display-4 text-success">Sucesso</h1>
+                        <p><?php echo $mensagem->status['descricao_status'] ?></p>
+                        <a href="index.php " class='btn btn-success btn-lg mb-5 text-white'>Voltar</a>
+                    </div>
+                <?php }
+                ?>
+
+                <?php
+                if ($mensagem->status['codigo_status'] == 2) { ?>
+                    <div class="container">
+                        <h1 class="display-4 text-danger">Oops!</h1>
+                        <p><?php echo $mensagem->status['descricao_status'] ?></p>
+                        <a href="index.php " class='btn btn-danger btn-lg mb-5 text-white'>Voltar</a>
+                    </div>
+                <?php }
+                ?>
+
+            </div>
+        </div>
+
+    </div>
+</body>
